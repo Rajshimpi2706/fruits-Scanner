@@ -5,9 +5,7 @@ from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from imageai.Classification import ImageClassification
 import uvicorn
-import torch
 
 # ------------------ APP SETUP ------------------
 app = FastAPI(title="Fruit Nutrition Detection API")
@@ -31,34 +29,40 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 USDA_API_KEY = os.getenv("USDA_API_KEY", "PjcAGiGcTDQiMsiTSFbfR5rIvo8cd0SFUGQIkRP1")
 USDA_BASE_URL = "https://api.nal.usda.gov/fdc/v1/foods/search"
 
-# ------------------ IMAGEAI MODEL SETUP ------------------
-execution_path = os.getcwd()
+# ------------------ IMAGEAI MODEL (lazy load to stay under 512MB on Render) ------------------
+_classifier = None
 
-classifier = ImageClassification()
-classifier.setModelTypeAsResNet50()
+def _get_model_path():
+    execution_path = os.getcwd()
+    possible_paths = [
+        os.path.join(BASE_DIR, "resnet50-19c8e357.pth"),
+        os.path.join(execution_path, "resnet50-19c8e357.pth"),
+        os.path.join(execution_path, "..", "resnet50-19c8e357.pth"),
+        os.path.join(execution_path, "..", "FruitNutritionDetector", "resnet50-19c8e357.pth"),
+    ]
+    return next((os.path.abspath(p) for p in possible_paths if os.path.isfile(p)), None)
 
-possible_paths = [
-    os.path.join(BASE_DIR, "resnet50-19c8e357.pth"),
-    os.path.join(execution_path, "resnet50-19c8e357.pth"),
-    os.path.join(execution_path, "..", "resnet50-19c8e357.pth"),
-    os.path.join(execution_path, "..", "FruitNutritionDetector", "resnet50-19c8e357.pth"),
-]
-
-model_path = next((os.path.abspath(p) for p in possible_paths if os.path.isfile(p)), None)
-
-if not model_path:
-    raise RuntimeError("Model file resnet50-19c8e357.pth not found")
-
-classifier.setModelPath(model_path)
-
-# Patch torch.load for ImageAI compatibility
-_original_load = torch.load
-def patched_load(*args, **kwargs):
-    kwargs.setdefault("weights_only", False)
-    return _original_load(*args, **kwargs)
-
-torch.load = patched_load
-classifier.loadModel()
+def get_classifier():
+    """Load ImageAI classifier on first use so server can start within 512MB (Render free tier)."""
+    global _classifier
+    if _classifier is not None:
+        return _classifier
+    model_path = _get_model_path()
+    if not model_path:
+        raise RuntimeError("Model file resnet50-19c8e357.pth not found")
+    import torch
+    from imageai.Classification import ImageClassification
+    _original_load = torch.load
+    def patched_load(*args, **kwargs):
+        kwargs.setdefault("weights_only", False)
+        return _original_load(*args, **kwargs)
+    torch.load = patched_load
+    classifier = ImageClassification()
+    classifier.setModelTypeAsResNet50()
+    classifier.setModelPath(model_path)
+    classifier.loadModel()
+    _classifier = classifier
+    return _classifier
 
 # ------------------ USDA FUNCTIONS ------------------
 def fetch_nutritional_data(food_name: str):
@@ -115,6 +119,7 @@ async def fruit_detection(file: UploadFile = File(...)):
         temp_path = tmp.name
 
     try:
+        classifier = get_classifier()
         predictions, probabilities = classifier.classifyImage(temp_path, result_count=1)
 
         detected_fruit = predictions[0]

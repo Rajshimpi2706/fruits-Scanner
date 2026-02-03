@@ -44,7 +44,9 @@ To run the app live on the web:
 7. Click **Create Web Service**. The first deploy may take 5–10 minutes (model download).
 8. When it’s done, open the URL shown (e.g. `https://fruits-scanner.onrender.com`).
 
-**Note:** On the free plan the service sleeps after ~15 minutes of no traffic; the first request after that may take 30–60 seconds to wake it up.
+**Notes:**  
+- On the free plan the service sleeps after ~15 minutes of no traffic; the first request after that may take 30–60 seconds to wake it up.  
+- The AI model loads on the first image you upload (to stay under 512MB at startup). That first detection may take 30–60 seconds; later ones are faster. If the first detection fails with "out of memory", switch to a **Starter** plan (more RAM) in Render.
 
 Notes
 - This uses ImageAI ResNet50 (ImageNet) for prototyping. For better fruit detection, fine-tune a model on a fruit dataset.
