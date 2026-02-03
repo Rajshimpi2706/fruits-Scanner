@@ -1,0 +1,17 @@
+# Deploy to Render: connect this repo at https://dashboard.render.com
+# Then use "New" -> "Blueprint" and point to this repo, or "New" -> "Web Service" and paste repo URL.
+services:
+  - type: web
+    name: fruits-scanner
+    runtime: python
+    plan: free
+
+    buildCommand: pip install -r requirements.txt && python download_model.py
+    startCommand: python app.py
+
+    healthCheckPath: /
+
+    envVars:
+      - key: USDA_API_KEY
+        sync: false
+        # Add your USDA API key in Render Dashboard after first deploy

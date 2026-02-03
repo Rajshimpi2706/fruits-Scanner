@@ -29,5 +29,22 @@ Quick start
 
    http://127.0.0.1:5002/docs
 
+## Live deployment (Render)
+
+To run the app live on the web:
+
+1. Push this repo to GitHub (e.g. [fruits-Scanner](https://github.com/Rajshimpi2706/fruits-Scanner)).
+2. Go to [Render Dashboard](https://dashboard.render.com) and sign in with GitHub.
+3. Click **New** → **Web Service**.
+4. Connect the `Rajshimpi2706/fruits-Scanner` repo (or your fork).
+5. Render will use the `render.yaml` in the repo. Confirm:
+   - **Build command:** `pip install -r requirements.txt && python download_model.py`
+   - **Start command:** `python app.py`
+6. Under **Environment**, add `USDA_API_KEY` with your [USDA API key](https://fdc.nal.usda.gov/api-key-signup.html).
+7. Click **Create Web Service**. The first deploy may take 5–10 minutes (model download).
+8. When it’s done, open the URL shown (e.g. `https://fruits-scanner.onrender.com`).
+
+**Note:** On the free plan the service sleeps after ~15 minutes of no traffic; the first request after that may take 30–60 seconds to wake it up.
+
 Notes
 - This uses ImageAI ResNet50 (ImageNet) for prototyping. For better fruit detection, fine-tune a model on a fruit dataset.
