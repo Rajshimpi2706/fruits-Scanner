@@ -7,6 +7,9 @@ venv/
 .venv/
 *.pth
 
+# Database (local)
+*.db
+
 # Temp / build
 tmp_*.js
 tmp_*.html

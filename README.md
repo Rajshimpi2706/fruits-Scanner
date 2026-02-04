@@ -1,33 +1,81 @@
-Fruit Nutrition Detector (raj folder)
+# Nutrition Analysis Web Application
 
-Quick start
+A production-ready nutrition analysis app with **authentication**, **AI-based image analysis**, and a modern health-tech UI. Users sign up, log in, upload food images, and get detailed nutrition data (calories, macros, vitamins/minerals) from the USDA database.
 
-1. Install dependencies (preferably in a virtualenv):
+## Tech stack
 
-   pip install -r requirements.txt
+- **Frontend:** HTML, Tailwind CSS, JavaScript (vanilla)
+- **Backend:** Python, FastAPI
+- **Database:** SQLite (SQLAlchemy)
+- **Auth:** JWT (Bearer), bcrypt password hashing
+- **AI:** ImageAI ResNet50 + USDA API for nutrition
 
-2. Ensure `resnet50-19c8e357.pth` is available in this folder or in `../FruitNutritionDetector/`.
+## Step-by-step instructions
 
-3. Set USDA API key (example, Windows PowerShell):
+### 1. Install and run locally
 
-   setx USDA_API_KEY "your_actual_api_key_here"
-   Restart your terminal to make it effective.
+```bash
+cd fruits-Scanner
+pip install -r requirements.txt
+```
 
-4. Run the app:
+Ensure the ResNet50 model file `resnet50-19c8e357.pth` is in this folder or in the parent folder (see [download_model.py](download_model.py) for auto-download on deploy).
 
-   python app.py
+Optional environment variables:
 
-5. Open the app (frontend + backend integrated):
+- `USDA_API_KEY` – your [USDA API key](https://fdc.nal.usda.gov/api-key-signup.html) (default key may have limits)
+- `SECRET_KEY` – JWT secret (set in production)
+- `DATABASE_URL` – defaults to `sqlite:///./nutrition_app.db`
 
-   http://127.0.0.1:5002/
+Run the server:
 
-   If port 5002 is in use, run instead:
-   uvicorn app:app --host 0.0.0.0 --port 5003
-   then open http://127.0.0.1:5003/
+```bash
+python app.py
+```
 
-6. API docs:
+Open **http://127.0.0.1:5002/** (or the port printed in the terminal).
 
-   http://127.0.0.1:5002/docs
+### 2. Use the app
+
+1. **Sign up** – Open the app; you’ll be redirected to `/login`. Click “Sign up”, enter Name, Email, Password (min 6 chars). Form validation and error messages are shown.
+2. **Log in** – After signup (or on later visits), log in with Email and Password. You receive a JWT and are redirected to the dashboard.
+3. **Dashboard** – Navbar: Home, Upload, How It Works, Logout. Scroll or use links to navigate.
+4. **Upload** – In the Upload section, drag & drop or click to choose an image (JPG/PNG). The upload area is disabled while scanning; a progress bar and scanning animation run until the backend finishes.
+5. **Results** – After analysis you see: food name, confidence %, calories, protein, fat, carbs, fiber, and vitamins/minerals when available from USDA.
+6. **How It Works** – Step-by-step: Image upload → Image processing → Food recognition (AI) → Nutrition data mapping (USDA).
+7. **Why This Project Is Important** – Benefits: healthy lifestyle, diet planning, fitness tracking, awareness about food nutrition.
+8. **Logout** – Click Logout in the navbar to clear the session and return to the login page.
+
+### 3. API overview
+
+- `POST /api/signup` – Body: `{ "name", "email", "password" }` → returns `{ "access_token", "user" }`
+- `POST /api/login` – Body: `{ "email", "password" }` → returns `{ "access_token", "user" }`
+- `GET /api/me` – Header: `Authorization: Bearer <token>` → current user
+- `POST /api/fruit-detection` – Header: `Authorization: Bearer <token>`, body: multipart `file` → detection + nutrition
+
+Unauthenticated users are redirected to the login page from the dashboard. The fruit-detection API returns 401 without a valid token.
+
+### 4. Database schema
+
+**users**
+
+| Column         | Type     | Description      |
+|----------------|----------|------------------|
+| id             | Integer  | Primary key      |
+| name           | String   | User name        |
+| email          | String   | Unique, indexed  |
+| password_hash  | String   | Bcrypt hash      |
+| created_at     | DateTime | Registration time|
+
+Tables are created automatically on first run (`init_db()`).
+
+## Quick start (summary)
+
+1. `pip install -r requirements.txt`
+2. (Optional) Set `USDA_API_KEY` and `SECRET_KEY`.
+3. `python app.py`
+4. Open **http://127.0.0.1:5002/** → sign up or log in → upload an image.
+5. API docs: **http://127.0.0.1:5002/docs**
 
 ## Live deployment (Render)
 
@@ -40,7 +88,9 @@ To run the app live on the web:
 5. Render will use the `render.yaml` in the repo. Confirm:
    - **Build command:** `pip install -r requirements.txt && python download_model.py`
    - **Start command:** `python app.py`
-6. Under **Environment**, add `USDA_API_KEY` with your [USDA API key](https://fdc.nal.usda.gov/api-key-signup.html).
+6. Under **Environment**, add:
+   - `USDA_API_KEY` – your [USDA API key](https://fdc.nal.usda.gov/api-key-signup.html)
+   - `SECRET_KEY` – a long random string for JWT signing (e.g. 32+ characters)
 7. Click **Create Web Service**. The first deploy may take 5–10 minutes (model download).
 8. When it’s done, open the URL shown (e.g. `https://fruits-scanner.onrender.com`).
 

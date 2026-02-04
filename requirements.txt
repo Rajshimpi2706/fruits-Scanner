@@ -7,3 +7,6 @@ imageai
 numpy
 pillow
 python-multipart
+passlib[bcrypt]
+python-jose[cryptography]
+sqlalchemy

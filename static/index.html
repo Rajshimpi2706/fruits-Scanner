@@ -306,11 +306,11 @@
                         FruitNutrition
                     </span>
                 </div>
-                <div class="hidden md:flex space-x-8">
+                <div class="hidden md:flex items-center space-x-8">
                     <a href="#home" class="nav-link text-gray-300 hover:text-cyan-400">Home</a>
-                    <a href="#upload" class="nav-link text-gray-300 hover:text-cyan-400">Upload Image</a>
+                    <a href="#upload" class="nav-link text-gray-300 hover:text-cyan-400">Upload</a>
                     <a href="#how-it-works" class="nav-link text-gray-300 hover:text-cyan-400">How It Works</a>
-                    <a href="#contact" class="nav-link text-gray-300 hover:text-cyan-400">Contact</a>
+                    <a href="#" id="logout-btn" class="nav-link text-gray-300 hover:text-red-400"><i class="fas fa-sign-out-alt mr-1"></i> Logout</a>
                 </div>
                 <button id="mobile-menu-btn" class="md:hidden text-cyan-400">
                     <i class="fas fa-bars text-2xl"></i>
@@ -319,9 +319,9 @@
             <!-- Mobile Menu -->
             <div id="mobile-menu" class="hidden md:hidden mt-4 space-y-3">
                 <a href="#home" class="block text-gray-300 hover:text-cyan-400">Home</a>
-                <a href="#upload" class="block text-gray-300 hover:text-cyan-400">Upload Image</a>
+                <a href="#upload" class="block text-gray-300 hover:text-cyan-400">Upload</a>
                 <a href="#how-it-works" class="block text-gray-300 hover:text-cyan-400">How It Works</a>
-                <a href="#contact" class="block text-gray-300 hover:text-cyan-400">Contact</a>
+                <a href="#" id="logout-btn-mobile" class="block text-gray-300 hover:text-red-400">Logout</a>
             </div>
         </div>
     </nav>
@@ -453,6 +453,12 @@
                         </div>
                     </div>
 
+                    <!-- Vitamins & Minerals (when available) -->
+                    <div id="vitamins-section" class="hidden mb-6">
+                        <h4 class="text-lg font-semibold text-cyan-400 mb-3"><i class="fas fa-pills mr-2"></i>Vitamins & Minerals</h4>
+                        <div id="vitamins-list" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+                    </div>
+
                     <button id="upload-another" class="btn-primary w-full py-3 rounded-full text-white font-semibold">
                         <i class="fas fa-redo mr-2"></i> Analyze Another Image
                     </button>
@@ -513,16 +519,45 @@
                 </div>
             </div>
 
-            <!-- Importance Section -->
-            <div class="feature-card rounded-2xl p-12 text-center max-w-4xl mx-auto">
+            <!-- Why This Project Is Important -->
+            <div class="feature-card rounded-2xl p-12 text-center max-w-4xl mx-auto mb-12">
                 <i class="fas fa-heartbeat text-6xl text-red-400 mb-6"></i>
-                <h3 class="text-3xl font-bold mb-4 text-cyan-400">Why Nutrition Matters</h3>
-                <p class="text-gray-300 text-lg leading-relaxed">
+                <h3 class="text-3xl font-bold mb-4 text-cyan-400">Why This Project Is Important</h3>
+                <p class="text-gray-300 text-lg leading-relaxed mb-8">
                     Understanding the nutritional content of your food is crucial for maintaining a healthy lifestyle. 
                     Our AI-powered tool helps you make informed dietary choices by providing instant, accurate nutritional 
-                    information. Whether you're managing your weight, tracking macros, or simply curious about what you eat, 
-                    our technology empowers you to take control of your health journey.
+                    information.
                 </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+                    <div class="flex items-start space-x-3 p-4 rounded-xl bg-slate-800/50">
+                        <i class="fas fa-apple-alt text-2xl text-cyan-400 mt-1"></i>
+                        <div>
+                            <h4 class="font-semibold text-cyan-400 mb-1">Healthy lifestyle</h4>
+                            <p class="text-gray-400 text-sm">Track what you eat and build better habits with real nutrition data.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3 p-4 rounded-xl bg-slate-800/50">
+                        <i class="fas fa-utensils text-2xl text-cyan-400 mt-1"></i>
+                        <div>
+                            <h4 class="font-semibold text-cyan-400 mb-1">Diet planning</h4>
+                            <p class="text-gray-400 text-sm">Plan meals and hit your macros with accurate calorie and nutrient info.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3 p-4 rounded-xl bg-slate-800/50">
+                        <i class="fas fa-dumbbell text-2xl text-cyan-400 mt-1"></i>
+                        <div>
+                            <h4 class="font-semibold text-cyan-400 mb-1">Fitness tracking</h4>
+                            <p class="text-gray-400 text-sm">Support your workouts with proper nutrition awareness.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3 p-4 rounded-xl bg-slate-800/50">
+                        <i class="fas fa-lightbulb text-2xl text-cyan-400 mt-1"></i>
+                        <div>
+                            <h4 class="font-semibold text-cyan-400 mb-1">Awareness about food</h4>
+                            <p class="text-gray-400 text-sm">Learn what’s in your food and make smarter choices every day.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -629,190 +664,198 @@
     </section>
 
     <script>
-        // Navigation Scroll Effect
-        window.addEventListener('scroll', () => {
-            const navbar = document.getElementById('navbar');
-            if (window.scrollY > 50) {
-                navbar.classList.add('scrolled');
-            } else {
-                navbar.classList.remove('scrolled');
+        // ---------- Auth: redirect if not logged in ----------
+        (function () {
+            var token = localStorage.getItem('token');
+            if (!token) {
+                window.location.replace('/login');
+                return;
             }
+        })();
+
+        // Navigation Scroll Effect
+        window.addEventListener('scroll', function () {
+            var navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) navbar.classList.add('scrolled');
+            else navbar.classList.remove('scrolled');
         });
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+        }
+        document.getElementById('logout-btn').addEventListener('click', function (e) { e.preventDefault(); logout(); });
+        document.getElementById('logout-btn-mobile').addEventListener('click', function (e) { e.preventDefault(); logout(); });
 
         // Mobile Menu Toggle
-        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-        const mobileMenu = document.getElementById('mobile-menu');
-        mobileMenuBtn.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
-        });
+        var mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        var mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuBtn.addEventListener('click', function () { mobileMenu.classList.toggle('hidden'); });
 
         // Upload Functionality
-        const uploadZone = document.getElementById('upload-zone');
-        const fileInput = document.getElementById('file-input');
-        const uploadContent = document.getElementById('upload-content');
-        const scanningState = document.getElementById('scanning-state');
-        const resultsSection = document.getElementById('results-section');
-        const progressBar = document.getElementById('progress-bar');
-        const progressText = document.getElementById('progress-text');
-        const previewImage = document.getElementById('preview-image');
-        const uploadAnotherBtn = document.getElementById('upload-another');
+        var uploadZone = document.getElementById('upload-zone');
+        var fileInput = document.getElementById('file-input');
+        var uploadContent = document.getElementById('upload-content');
+        var scanningState = document.getElementById('scanning-state');
+        var resultsSection = document.getElementById('results-section');
+        var progressBar = document.getElementById('progress-bar');
+        var progressText = document.getElementById('progress-text');
+        var previewImage = document.getElementById('preview-image');
+        var uploadAnotherBtn = document.getElementById('upload-another');
+        var isScanning = false;
 
-        // Click to upload
-        uploadZone.addEventListener('click', () => {
+        function setUploadEnabled(enabled) {
+            isScanning = !enabled;
+            uploadZone.style.pointerEvents = enabled ? '' : 'none';
+            uploadZone.style.opacity = enabled ? '1' : '0.7';
+        }
+
+        // Click to upload (only when not scanning)
+        uploadZone.addEventListener('click', function (e) {
+            if (isScanning) return;
             fileInput.click();
         });
 
         // Drag and drop
-        uploadZone.addEventListener('dragover', (e) => {
+        uploadZone.addEventListener('dragover', function (e) {
             e.preventDefault();
-            uploadZone.classList.add('dragover');
+            if (!isScanning) uploadZone.classList.add('dragover');
         });
-
-        uploadZone.addEventListener('dragleave', () => {
-            uploadZone.classList.remove('dragover');
-        });
-
-        uploadZone.addEventListener('drop', (e) => {
+        uploadZone.addEventListener('dragleave', function () { uploadZone.classList.remove('dragover'); });
+        uploadZone.addEventListener('drop', function (e) {
             e.preventDefault();
             uploadZone.classList.remove('dragover');
-            const file = e.dataTransfer.files[0];
-            if (file && file.type.startsWith('image/')) {
-                handleFileUpload(file);
-            }
+            if (isScanning) return;
+            var file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) handleFileUpload(file);
+        });
+        fileInput.addEventListener('change', function (e) {
+            var file = e.target.files[0];
+            if (file) handleFileUpload(file);
         });
 
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                handleFileUpload(file);
-            }
-        });
+        function handleFileUpload(file) {
+            var token = localStorage.getItem('token');
+            if (!token) { window.location.href = '/login'; return; }
 
-        async function handleFileUpload(file) {
-            // Show preview
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                previewImage.src = e.target.result;
-            };
+            setUploadEnabled(false);
+            var reader = new FileReader();
+            reader.onload = function (e) { previewImage.src = e.target.result; };
             reader.readAsDataURL(file);
 
-            // Show scanning state
             uploadContent.classList.add('hidden');
             scanningState.classList.remove('hidden');
             resultsSection.classList.add('hidden');
+            progressBar.style.width = '0%';
+            progressText.textContent = '0%';
 
-            // Show progress
-            let progress = 0;
-            const progressInterval = setInterval(() => {
-                progress += 5;
+            var progress = 0;
+            var progressInterval = setInterval(function () {
+                progress += Math.min(5, 100 - progress);
                 progressBar.style.width = progress + '%';
                 progressText.textContent = progress + '%';
-            }, 100);
+            }, 150);
 
-            try {
-                // Send file to backend API
-                const formData = new FormData();
-                formData.append('file', file);
+            var formData = new FormData();
+            formData.append('file', file);
 
-                const response = await fetch('/fruit-detection', {
-                    method: 'POST',
-                    body: formData
+            fetch('/api/fruit-detection', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token },
+                body: formData
+            })
+                .then(function (response) {
+                    clearInterval(progressInterval);
+                    progressBar.style.width = '100%';
+                    progressText.textContent = '100%';
+                    if (!response.ok) return response.json().then(function (d) { throw new Error(d.detail || 'Request failed'); });
+                    return response.json();
+                })
+                .then(function (data) {
+                    setTimeout(function () {
+                        displayResults(data);
+                        setUploadEnabled(true);
+                    }, 400);
+                })
+                .catch(function (err) {
+                    clearInterval(progressInterval);
+                    setUploadEnabled(true);
+                    uploadContent.classList.remove('hidden');
+                    scanningState.classList.add('hidden');
+                    progressBar.style.width = '0%';
+                    progressText.textContent = '0%';
+                    alert(err.message || 'Error processing image. Please try again.');
                 });
-
-                if (!response.ok) {
-                    throw new Error(`API request failed: ${response.status}`);
-                }
-
-                const data = await response.json();
-
-                // Complete progress
-                clearInterval(progressInterval);
-                progressBar.style.width = '100%';
-                progressText.textContent = '100%';
-
-                // Display results
-                setTimeout(() => {
-                    displayResults(data);
-                }, 500);
-
-            } catch (error) {
-                console.error('Error uploading file:', error);
-                clearInterval(progressInterval);
-                alert('Error processing image. Please try again.');
-                // Reset to upload state
-                uploadContent.classList.remove('hidden');
-                scanningState.classList.add('hidden');
-                resultsSection.classList.add('hidden');
-                progressBar.style.width = '0%';
-                progressText.textContent = '0%';
-            }
         }
 
 
 
         function displayResults(data) {
-            // Hide scanning, show results
             scanningState.classList.add('hidden');
             resultsSection.classList.remove('hidden');
 
-            // Update detected fruit
-            document.getElementById('detected-fruit').textContent = data.detected_fruit;
+            document.getElementById('detected-fruit').textContent = data.detected_fruit || 'Unknown';
 
-            // Animate confidence bar (backend sends 0-1, e.g. 0.95)
-            const confidencePct = typeof data.confidence === 'number' && data.confidence <= 1
-                ? data.confidence * 100 : data.confidence;
-            const confidenceFill = document.getElementById('confidence-fill');
-            const confidenceText = document.getElementById('confidence-text');
-            setTimeout(() => {
+            var confidencePct = (typeof data.confidence === 'number' && data.confidence <= 1)
+                ? data.confidence * 100 : (data.confidence || 0);
+            var confidenceFill = document.getElementById('confidence-fill');
+            var confidenceText = document.getElementById('confidence-text');
+            setTimeout(function () {
                 confidenceFill.style.width = confidencePct + '%';
                 confidenceText.textContent = confidencePct.toFixed(1) + '%';
             }, 100);
 
-            // Update nutrition values (handle error when USDA returns no data)
-            const nutritionInfo = data.nutrition_info || {};
-            const nutrients = nutritionInfo.nutrients || {};
-            const na = 'N/A';
-            if (nutritionInfo.error) {
-                document.getElementById('energy-value').textContent = na;
-                document.getElementById('protein-value').textContent = na;
-                document.getElementById('fat-value').textContent = na;
-                document.getElementById('carbs-value').textContent = na;
-                document.getElementById('fiber-value').textContent = na;
+            var nutritionInfo = data.nutrition_info || {};
+            var nutrients = nutritionInfo.nutrients || {};
+            var na = 'N/A';
+            function fmt(val, unit) { return val != null && val !== '' ? val + (unit || '') : na; }
+            document.getElementById('energy-value').textContent = fmt(nutrients['Energy'], ' kcal');
+            document.getElementById('protein-value').textContent = fmt(nutrients['Protein'], ' g');
+            document.getElementById('fat-value').textContent = fmt(nutrients['Total lipid (fat)'], ' g');
+            document.getElementById('carbs-value').textContent = fmt(nutrients['Carbohydrate, by difference'], ' g');
+            document.getElementById('fiber-value').textContent = fmt(nutrients['Fiber, total dietary'], ' g');
+
+            var vitaminsSection = document.getElementById('vitamins-section');
+            var vitaminsList = document.getElementById('vitamins-list');
+            var vm = nutritionInfo.vitamins_minerals || {};
+            var vmKeys = Object.keys(vm).filter(function (k) { return vm[k] != null && vm[k] !== ''; });
+            if (vmKeys.length > 0) {
+                vitaminsSection.classList.remove('hidden');
+                vitaminsList.innerHTML = vmKeys.map(function (k) {
+                    var short = k.replace(/,\s*(total|RAE|D2 \+ D3|Ca|Fe|Na|K).*$/i, '').trim();
+                    return '<div class="nutrient-item rounded-lg p-3 flex justify-between items-center">' +
+                        '<span class="text-gray-300">' + short + '</span>' +
+                        '<span class="font-bold text-cyan-400">' + vm[k] + '</span></div>';
+                }).join('');
             } else {
-                document.getElementById('energy-value').textContent = (nutrients["Energy"] != null ? nutrients["Energy"] : na) + (nutrients["Energy"] != null ? ' kcal' : '');
-                document.getElementById('protein-value').textContent = (nutrients["Protein"] != null ? nutrients["Protein"] : na) + (nutrients["Protein"] != null ? ' g' : '');
-                document.getElementById('fat-value').textContent = (nutrients["Total lipid (fat)"] != null ? nutrients["Total lipid (fat)"] : na) + (nutrients["Total lipid (fat)"] != null ? ' g' : '');
-                document.getElementById('carbs-value').textContent = (nutrients["Carbohydrate, by difference"] != null ? nutrients["Carbohydrate, by difference"] : na) + (nutrients["Carbohydrate, by difference"] != null ? ' g' : '');
-                document.getElementById('fiber-value').textContent = (nutrients["Fiber, total dietary"] != null ? nutrients["Fiber, total dietary"] : na) + (nutrients["Fiber, total dietary"] != null ? ' g' : '');
+                vitaminsSection.classList.add('hidden');
             }
 
-            // Scroll to results
-            setTimeout(() => {
+            setTimeout(function () {
                 resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 200);
         }
 
-        uploadAnotherBtn.addEventListener('click', () => {
-            // Reset to upload state
+        uploadAnotherBtn.addEventListener('click', function () {
             uploadContent.classList.remove('hidden');
             scanningState.classList.add('hidden');
             resultsSection.classList.add('hidden');
             progressBar.style.width = '0%';
             progressText.textContent = '0%';
             fileInput.value = '';
-            
-            // Scroll to upload section
             document.getElementById('upload').scrollIntoView({ behavior: 'smooth' });
         });
 
-        // Smooth scroll for navigation links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
             anchor.addEventListener('click', function (e) {
+                var href = this.getAttribute('href');
+                if (href === '#') return;
                 e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
+                var target = document.querySelector(href);
                 if (target) {
                     target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    // Close mobile menu if open
                     mobileMenu.classList.add('hidden');
                 }
             });
