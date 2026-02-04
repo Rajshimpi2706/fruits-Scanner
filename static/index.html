@@ -354,6 +354,16 @@
                 Simply upload an image and let our AI analyze the nutritional content
             </p>
 
+            <!-- Actions -->
+            <div class="flex flex-col sm:flex-row gap-3 justify-center mb-6">
+                <button id="open-camera-btn" class="btn-primary px-6 py-3 rounded-full text-white font-semibold w-full sm:w-auto">
+                    <i class="fas fa-camera mr-2"></i> Open Camera
+                </button>
+                <button id="open-gallery-btn" class="feature-card px-6 py-3 rounded-full text-gray-200 font-semibold w-full sm:w-auto hover:border-cyan-400">
+                    <i class="fas fa-images mr-2 text-cyan-400"></i> Choose from Gallery
+                </button>
+            </div>
+
             <!-- Upload Zone -->
             <div id="upload-zone" class="upload-zone rounded-2xl p-12 text-center cursor-pointer">
                 <div id="upload-content">
@@ -377,6 +387,30 @@
                             <div id="progress-bar" class="progress-bar h-full" style="width: 0%"></div>
                         </div>
                         <p id="progress-text" class="text-sm text-gray-400 mt-2">0%</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Camera Modal -->
+            <div id="camera-modal" class="hidden fixed inset-0 z-50 bg-black/70 flex items-center justify-center px-4">
+                <div class="feature-card w-full max-w-2xl rounded-2xl p-4 md:p-6">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-xl font-bold text-cyan-400"><i class="fas fa-camera mr-2"></i>Camera</h3>
+                        <button id="camera-close" class="text-gray-300 hover:text-red-400 text-xl" aria-label="Close camera">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="rounded-xl overflow-hidden bg-slate-950">
+                        <video id="camera-video" class="w-full h-auto" autoplay playsinline></video>
+                    </div>
+                    <p id="camera-error" class="text-red-400 text-sm mt-3 hidden"></p>
+                    <div class="flex flex-col sm:flex-row gap-3 mt-4">
+                        <button id="camera-capture" class="btn-primary w-full py-3 rounded-xl text-white font-semibold">
+                            <i class="fas fa-circle mr-2"></i> Capture Photo
+                        </button>
+                        <button id="camera-switch" class="feature-card w-full py-3 rounded-xl text-gray-200 font-semibold hover:border-cyan-400">
+                            <i class="fas fa-sync mr-2 text-cyan-400"></i> Switch Camera
+                        </button>
                     </div>
                 </div>
             </div>
@@ -666,11 +700,11 @@
     <script>
         // ---------- Auth: redirect if not logged in ----------
         (function () {
-            var token = localStorage.getItem('token');
-            if (!token) {
-                window.location.replace('/login');
-                return;
-            }
+            fetch('/api/me', { credentials: 'include' })
+                .then(function (r) {
+                    if (!r.ok) window.location.replace('/login');
+                })
+                .catch(function () { window.location.replace('/login'); });
         })();
 
         // Navigation Scroll Effect
@@ -682,9 +716,8 @@
 
         // Logout
         function logout() {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = '/login';
+            fetch('/api/logout', { method: 'POST', credentials: 'include' })
+                .finally(function () { window.location.href = '/login'; });
         }
         document.getElementById('logout-btn').addEventListener('click', function (e) { e.preventDefault(); logout(); });
         document.getElementById('logout-btn-mobile').addEventListener('click', function (e) { e.preventDefault(); logout(); });
@@ -705,15 +738,36 @@
         var previewImage = document.getElementById('preview-image');
         var uploadAnotherBtn = document.getElementById('upload-another');
         var isScanning = false;
+        var openCameraBtn = document.getElementById('open-camera-btn');
+        var openGalleryBtn = document.getElementById('open-gallery-btn');
+
+        // Camera elements
+        var cameraModal = document.getElementById('camera-modal');
+        var cameraVideo = document.getElementById('camera-video');
+        var cameraClose = document.getElementById('camera-close');
+        var cameraCapture = document.getElementById('camera-capture');
+        var cameraSwitch = document.getElementById('camera-switch');
+        var cameraError = document.getElementById('camera-error');
+        var cameraStream = null;
+        var useFrontCamera = false;
 
         function setUploadEnabled(enabled) {
             isScanning = !enabled;
             uploadZone.style.pointerEvents = enabled ? '' : 'none';
             uploadZone.style.opacity = enabled ? '1' : '0.7';
+            openCameraBtn.disabled = !enabled;
+            openGalleryBtn.disabled = !enabled;
+            openCameraBtn.style.opacity = enabled ? '1' : '0.7';
+            openGalleryBtn.style.opacity = enabled ? '1' : '0.7';
         }
 
         // Click to upload (only when not scanning)
         uploadZone.addEventListener('click', function (e) {
+            if (isScanning) return;
+            fileInput.click();
+        });
+
+        openGalleryBtn.addEventListener('click', function () {
             if (isScanning) return;
             fileInput.click();
         });
@@ -737,9 +791,6 @@
         });
 
         function handleFileUpload(file) {
-            var token = localStorage.getItem('token');
-            if (!token) { window.location.href = '/login'; return; }
-
             setUploadEnabled(false);
             var reader = new FileReader();
             reader.onload = function (e) { previewImage.src = e.target.result; };
@@ -761,9 +812,9 @@
             var formData = new FormData();
             formData.append('file', file);
 
-            fetch('/api/fruit-detection', {
+            fetch('/predict', {
                 method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + token },
+                credentials: 'include',
                 body: formData
             })
                 .then(function (response) {
@@ -796,7 +847,7 @@
             scanningState.classList.add('hidden');
             resultsSection.classList.remove('hidden');
 
-            document.getElementById('detected-fruit').textContent = data.detected_fruit || 'Unknown';
+            document.getElementById('detected-fruit').textContent = data.food || 'Unknown';
 
             var confidencePct = (typeof data.confidence === 'number' && data.confidence <= 1)
                 ? data.confidence * 100 : (data.confidence || 0);
@@ -807,15 +858,15 @@
                 confidenceText.textContent = confidencePct.toFixed(1) + '%';
             }, 100);
 
-            var nutritionInfo = data.nutrition_info || {};
-            var nutrients = nutritionInfo.nutrients || {};
+            var nutritionInfo = data.nutrition || {};
+            var na = 'N/A';
             var na = 'N/A';
             function fmt(val, unit) { return val != null && val !== '' ? val + (unit || '') : na; }
-            document.getElementById('energy-value').textContent = fmt(nutrients['Energy'], ' kcal');
-            document.getElementById('protein-value').textContent = fmt(nutrients['Protein'], ' g');
-            document.getElementById('fat-value').textContent = fmt(nutrients['Total lipid (fat)'], ' g');
-            document.getElementById('carbs-value').textContent = fmt(nutrients['Carbohydrate, by difference'], ' g');
-            document.getElementById('fiber-value').textContent = fmt(nutrients['Fiber, total dietary'], ' g');
+            document.getElementById('energy-value').textContent = fmt(nutritionInfo.calories, ' kcal');
+            document.getElementById('protein-value').textContent = fmt(nutritionInfo.protein_g, ' g');
+            document.getElementById('fat-value').textContent = fmt(nutritionInfo.fat_g, ' g');
+            document.getElementById('carbs-value').textContent = fmt(nutritionInfo.carbs_g, ' g');
+            document.getElementById('fiber-value').textContent = fmt(nutritionInfo.fiber_g, ' g');
 
             var vitaminsSection = document.getElementById('vitamins-section');
             var vitaminsList = document.getElementById('vitamins-list');
@@ -824,7 +875,7 @@
             if (vmKeys.length > 0) {
                 vitaminsSection.classList.remove('hidden');
                 vitaminsList.innerHTML = vmKeys.map(function (k) {
-                    var short = k.replace(/,\s*(total|RAE|D2 \+ D3|Ca|Fe|Na|K).*$/i, '').trim();
+                    var short = k;
                     return '<div class="nutrient-item rounded-lg p-3 flex justify-between items-center">' +
                         '<span class="text-gray-300">' + short + '</span>' +
                         '<span class="font-bold text-cyan-400">' + vm[k] + '</span></div>';
@@ -846,6 +897,82 @@
             progressText.textContent = '0%';
             fileInput.value = '';
             document.getElementById('upload').scrollIntoView({ behavior: 'smooth' });
+        });
+
+        // ---------- Camera feature ----------
+        function stopCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} });
+                cameraStream = null;
+            }
+            cameraVideo.srcObject = null;
+        }
+
+        function showCameraError(msg) {
+            cameraError.textContent = msg || '';
+            cameraError.classList.toggle('hidden', !msg);
+        }
+
+        function openCamera() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert('Camera is not supported on this browser. Please upload from gallery instead.');
+                return;
+            }
+            showCameraError('');
+            cameraModal.classList.remove('hidden');
+            var constraints = {
+                video: { facingMode: useFrontCamera ? 'user' : { ideal: 'environment' } },
+                audio: false
+            };
+            navigator.mediaDevices.getUserMedia(constraints)
+                .then(function (stream) {
+                    cameraStream = stream;
+                    cameraVideo.srcObject = stream;
+                })
+                .catch(function (err) {
+                    showCameraError('Camera permission denied or unavailable. Please allow permission or use gallery upload.');
+                });
+        }
+
+        openCameraBtn.addEventListener('click', function () {
+            if (isScanning) return;
+            openCamera();
+        });
+
+        cameraClose.addEventListener('click', function () {
+            stopCamera();
+            cameraModal.classList.add('hidden');
+        });
+
+        cameraSwitch.addEventListener('click', function () {
+            useFrontCamera = !useFrontCamera;
+            stopCamera();
+            openCamera();
+        });
+
+        cameraCapture.addEventListener('click', function () {
+            if (!cameraStream) {
+                showCameraError('Camera is not ready yet.');
+                return;
+            }
+            // Capture current frame to blob
+            var canvas = document.createElement('canvas');
+            canvas.width = cameraVideo.videoWidth || 1280;
+            canvas.height = cameraVideo.videoHeight || 720;
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(cameraVideo, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(function (blob) {
+                if (!blob) {
+                    showCameraError('Failed to capture image. Try again.');
+                    return;
+                }
+                stopCamera();
+                cameraModal.classList.add('hidden');
+
+                // Use the same pipeline as gallery upload
+                var file = new File([blob], 'camera.jpg', { type: 'image/jpeg' });
+                handleFileUpload(file);
+            }, 'image/jpeg', 0.92);
         });
 
         document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {

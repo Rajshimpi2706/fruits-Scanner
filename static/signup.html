@@ -119,9 +119,7 @@
                         setLoading(false);
                         return;
                     }
-                    if (data.access_token) {
-                        localStorage.setItem('token', data.access_token);
-                        if (data.user) localStorage.setItem('user', JSON.stringify(data.user));
+                    if (data.message === 'Signup successful') {
                         window.location.href = '/';
                     } else {
                         showError(formErr, 'Invalid response. Please try again.');
